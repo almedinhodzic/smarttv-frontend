@@ -12,11 +12,26 @@ export interface DeviceInfo {
 
 // ============ Channel / IPTV ============
 
+export type PurchaseStatus =
+  | 'FREE'
+  | 'PURCHASED'
+  | 'IN_OTHER_SUBSCRIPTION'
+  | 'PAYABLE'
+  | 'PREORDERED'
+  | 'CALL_OPERATOR'
+  | 'UNAVAILABLE'
+
 export interface Channel {
-  id: string | number
+  id: string
   num: number
   name: string
-  url: string
+  icon: string
+  type: string
+  hd: boolean
+  quality?: string
+  purchaseStatus: PurchaseStatus
+  streams?: unknown[]
+  url?: string
   logo?: string
   group?: string
   epgId?: string
