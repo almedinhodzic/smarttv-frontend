@@ -1,0 +1,15 @@
+{
+  "id": "com.smarttv.iptv",
+  "version": "1.0.0",
+  "vendor": "SmartTV",
+  "type": "web",
+  "main": "index.html",
+  "title": "SmartTV IPTV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgImage": "splash.png",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": false,
+  "transparent": false,
+  "handlesRelaunch": false
+}
