@@ -67,19 +67,19 @@ export function Sidebar({ visible, open, activePath, onClose, onOpenSettings }: 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
         setFocusIndex((i) => Math.min(i + 1, focusableItems.length - 1))
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
         setFocusIndex((i) => Math.max(i - 1, 0))
       } else if (e.key === 'Enter' || e.key === 'Return') {
         e.preventDefault()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
         handleSelect()
       } else if (e.key === 'ArrowRight' || e.key === 'Escape' || e.key === 'Back') {
         e.preventDefault()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
         onClose()
       }
     }

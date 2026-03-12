@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'preact/hooks'
 import { route } from 'preact-router'
 import { useChannelStore } from '@/stores/channelStore'
 import { useSessionStore } from '@/stores/sessionStore'
+import { isSpatialEnabled } from '@/spatial'
 import { Loader } from '@/components/Loader'
 import { ChannelCard } from '@/components/ChannelCard'
 import { ChannelCardFocused } from '@/components/ChannelCardFocused'
@@ -44,7 +45,7 @@ export function LiveTV() {
   const listActive = focusArea === 'list'
 
   const handleKey = useCallback((e: KeyboardEvent) => {
-    if (!channels.length) return
+    if (!channels.length || !isSpatialEnabled()) return
 
     switch (e.key) {
       case 'ArrowUp':

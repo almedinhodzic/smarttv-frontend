@@ -120,7 +120,7 @@ function handleKeyDown(e: KeyboardEvent): void {
     return
   }
 
-  if (KEY_ENTER.includes(e.key)) {
+  if (KEY_ENTER.indexOf(e.key) >= 0) {
     e.preventDefault()
     if (currentFocused) {
       currentFocused.click()
@@ -129,7 +129,7 @@ function handleKeyDown(e: KeyboardEvent): void {
     return
   }
 
-  if (KEY_BACK.includes(e.key) || e.keyCode === 10009) {
+  if (KEY_BACK.indexOf(e.key) >= 0 || e.keyCode === 10009) {
     e.preventDefault()
     if (onBackCallback) onBackCallback()
     return
@@ -176,3 +176,4 @@ export function setOnEdge(cb: ((direction: Direction) => void) | null): void {
 
 export function spatialEnable(): void { enabled = true }
 export function spatialDisable(): void { enabled = false }
+export function isSpatialEnabled(): boolean { return enabled }
