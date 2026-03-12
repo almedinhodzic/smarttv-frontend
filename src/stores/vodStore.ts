@@ -40,45 +40,78 @@ const LIBRARY_QUERY = (libraryId: string) => `{
   }
 }`
 
-const CATEGORY_CONTENTS_QUERY = (libraryId: string, categoryId: string, count = 50) => `{
+const SUBCATEGORIES_QUERY = (libraryId: string, categoryId: string) => `{
   category(categoryId: "${categoryId}", libraryId: "${libraryId}") {
     id
-    contentConnection(first: ${count}) {
-      contents {
-        id
-        type
-        categoryId
-        isFavorite
-        isNew
-        title
-        poster { landscape portrait }
-        ageRating
-        description
-        year
-        genres
-        purchaseInfo {
-          status
-          libraryId
-        }
-        ... on Video {
-          runtimeInMinutes
-          directors
-          cast
-        }
-        ... on Series {
-          seriesId
-          contentCount
+    title
+    subcategories {
+      id
+      title
+      tag
+      poster { landscape portrait }
+      ageRating
+      isLeaf
+      contentConnection(first: 20, randomize: true) {
+        contentCount
+        contents {
+          categoryId
+          poster { landscape portrait }
+          ageRating
         }
       }
     }
   }
 }`
 
+const CONTENT_FIELDS = `
+  id
+  type
+  categoryId
+  isFavorite
+  isNew
+  title
+  poster { landscape portrait }
+  ageRating
+  description
+  year
+  genres
+  purchaseInfo {
+    status
+    libraryId
+  }
+  ... on Video {
+    runtimeInMinutes
+    directors
+    cast
+  }
+  ... on Series {
+    seriesId
+    contentCount
+  }
+`
+
+const CATEGORY_CONTENTS_QUERY = (libraryId: string, categoryId: string, count = 50) => `{
+  category(categoryId: "${categoryId}", libraryId: "${libraryId}") {
+    id
+    contentConnection(first: ${count}) {
+      contents {
+        ${CONTENT_FIELDS}
+      }
+    }
+  }
+}`
+
+export interface ContentRow {
+  title: string
+  categoryId: string
+  contents: VodContent[]
+}
+
 interface VodState {
   libraries: VodLibraryInfoDto[]
   categories: Category[]
   selectedCategoryIndex: number
-  contents: VodContent[]
+  rows: ContentRow[]
   isLoadingLibraries: boolean
   isLoadingCategories: boolean
   isLoadingContents: boolean
@@ -87,7 +120,7 @@ interface VodState {
 
   fetchLibraries: (regionId: string, language: string) => Promise<void>
   fetchCategories: (profileId: string, libraryId: string) => Promise<void>
-  fetchCategoryContents: (profileId: string, libraryId: string, categoryId: string) => Promise<void>
+  fetchCategoryData: (profileId: string, libraryId: string, category: Category) => Promise<void>
   setSelectedCategoryIndex: (index: number) => void
 }
 
@@ -95,7 +128,7 @@ export const useVodStore = create<VodState>((set, get) => ({
   libraries: [],
   categories: [],
   selectedCategoryIndex: 0,
-  contents: [],
+  rows: [],
   isLoadingLibraries: false,
   isLoadingCategories: false,
   isLoadingContents: false,
@@ -116,35 +149,74 @@ export const useVodStore = create<VodState>((set, get) => ({
   fetchCategories: async (profileId, libraryId) => {
     set({ isLoadingCategories: true, error: '', libraryId })
     try {
-      const body = { query: LIBRARY_QUERY(libraryId) }
-      console.log('[VOD] fetchCategories profileId:', profileId, 'libraryId:', libraryId)
-      console.log('[VOD] GraphQL body:', JSON.stringify(body))
-      const res = await sdk.vod.getVodLibrary(profileId, body)
+      const res = await sdk.vod.getVodLibrary(profileId, {
+        query: LIBRARY_QUERY(libraryId),
+      })
       const data = (res as any)?.data?.vodLibrary ?? res
       const cats: Category[] = data?.categories || []
       set({ categories: cats, isLoadingCategories: false, selectedCategoryIndex: 0 })
 
-      // Auto-fetch first category contents
       if (cats.length > 0) {
-        get().fetchCategoryContents(profileId, libraryId, cats[0].id)
+        get().fetchCategoryData(profileId, libraryId, cats[0])
       }
     } catch (e: any) {
-      console.error('[VOD] fetchCategories error:', e?.response?.status, e?.response?.data, e)
+      console.error('[VOD] fetchCategories error:', e?.response?.status, e?.response?.data)
       set({ error: e instanceof Error ? e.message : 'Failed to load categories', isLoadingCategories: false })
     }
   },
 
-  fetchCategoryContents: async (profileId, libraryId, categoryId) => {
-    set({ isLoadingContents: true })
+  fetchCategoryData: async (profileId, libraryId, category) => {
+    set({ isLoadingContents: true, rows: [] })
     try {
-      const res = await sdk.vod.getCategory(profileId, {
-        query: CATEGORY_CONTENTS_QUERY(libraryId, categoryId),
-      })
-      const data = (res as any)?.data?.category ?? res
-      const contents: VodContent[] = data?.contentConnection?.contents || []
-      set({ contents, isLoadingContents: false })
+      const isLeaf = String(category.isLeaf) === 'true'
+      if (isLeaf) {
+        // Leaf category: fetch contents directly, single row without title
+        const res = await sdk.vod.getCategory(profileId, {
+          query: CATEGORY_CONTENTS_QUERY(libraryId, category.id),
+        })
+        const data = (res as any)?.data?.category ?? res
+        const contents: VodContent[] = data?.contentConnection?.contents || []
+        set({
+          rows: contents.length > 0 ? [{ title: '', categoryId: category.id, contents }] : [],
+          isLoadingContents: false,
+        })
+      } else {
+        // Non-leaf: fetch subcategories, then fetch each subcategory's contents
+        const subRes = await sdk.vod.getCategory(profileId, {
+          query: SUBCATEGORIES_QUERY(libraryId, category.id),
+        })
+        const subData = (subRes as any)?.data?.category ?? subRes
+        const subcats: Category[] = subData?.subcategories || []
+
+        if (subcats.length === 0) {
+          set({ rows: [], isLoadingContents: false })
+          return
+        }
+
+        // Fetch contents for all subcategories in parallel
+        const rowPromises = subcats.map(async (sub) => {
+          try {
+            const res = await sdk.vod.getCategory(profileId, {
+              query: CATEGORY_CONTENTS_QUERY(libraryId, sub.id),
+            })
+            const d = (res as any)?.data?.category ?? res
+            const contents: VodContent[] = d?.contentConnection?.contents || []
+            return { title: sub.title, categoryId: sub.id, contents }
+          } catch {
+            return { title: sub.title, categoryId: sub.id, contents: [] as VodContent[] }
+          }
+        })
+
+        const allRows = await Promise.all(rowPromises)
+        // Only show rows that have content
+        set({
+          rows: allRows.filter((r) => r.contents.length > 0),
+          isLoadingContents: false,
+        })
+      }
     } catch (e) {
-      set({ contents: [], isLoadingContents: false })
+      console.error('[VOD] fetchCategoryData error:', e)
+      set({ rows: [], isLoadingContents: false })
     }
   },
 

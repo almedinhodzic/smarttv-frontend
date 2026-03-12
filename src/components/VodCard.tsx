@@ -11,6 +11,8 @@ export function VodCard({ content, focused }: VodCardProps) {
   const posterUrl = resolveApiUrl(content.poster?.landscape || content.poster?.portrait)
   const year = content.year ? String(content.year) : ''
   const genres = content.genres?.slice(0, 2).join(', ') || ''
+  const runtime = (content as any).runtimeInMinutes
+  const isSeries = content.type === 'Series' || !!(content as any).seriesId
 
   return (
     <div class={`vod-card ${focused ? 'focused' : ''}`}>
@@ -24,6 +26,9 @@ export function VodCard({ content, focused }: VodCardProps) {
           <span class="vod-card-meta">
             {year}{year && genres ? ' · ' : ''}{genres}
           </span>
+        )}
+        {runtime > 0 && (
+          <span class="vod-card-duration">{runtime} min{isSeries ? ' · Series' : ''}</span>
         )}
       </div>
     </div>

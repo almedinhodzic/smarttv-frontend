@@ -7,9 +7,8 @@ import { Loader } from '@/components/Loader'
 import { VodCategoryBar } from '@/components/VodCategoryBar'
 import { VodCard } from '@/components/VodCard'
 
-const GRID_COLS = 5
-const CHIP_W = 220
-const CHIP_GAP = 12
+const CHIP_W = 280
+const CHIP_GAP = 16
 
 export function VOD() {
   const user = useSessionStore((s) => s.user)
@@ -18,7 +17,7 @@ export function VOD() {
   const libraries = useVodStore((s) => s.libraries)
   const categories = useVodStore((s) => s.categories)
   const selectedCategoryIndex = useVodStore((s) => s.selectedCategoryIndex)
-  const contents = useVodStore((s) => s.contents)
+  const rows = useVodStore((s) => s.rows)
   const isLoadingCategories = useVodStore((s) => s.isLoadingCategories)
   const isLoadingContents = useVodStore((s) => s.isLoadingContents)
   const isLoadingLibraries = useVodStore((s) => s.isLoadingLibraries)
@@ -26,13 +25,15 @@ export function VOD() {
   const libraryId = useVodStore((s) => s.libraryId)
   const fetchLibraries = useVodStore((s) => s.fetchLibraries)
   const fetchCategories = useVodStore((s) => s.fetchCategories)
-  const fetchCategoryContents = useVodStore((s) => s.fetchCategoryContents)
+  const fetchCategoryData = useVodStore((s) => s.fetchCategoryData)
   const setSelectedCategoryIndex = useVodStore((s) => s.setSelectedCategoryIndex)
 
-  const [focusArea, setFocusArea] = useState<'categories' | 'grid'>('categories')
-  const [gridIndex, setGridIndex] = useState(0)
+  const [focusArea, setFocusArea] = useState<'categories' | 'rows'>('categories')
+  const [rowIndex, setRowIndex] = useState(0)
+  const [colIndex, setColIndex] = useState(0)
   const [catScrollOffset, setCatScrollOffset] = useState(0)
-  const [gridScrollY, setGridScrollY] = useState(0)
+  const [rowScrollOffsets, setRowScrollOffsets] = useState<number[]>([])
+  const [contentScrollY, setContentScrollY] = useState(0)
 
   const profileId = selectedProfile?.idProfile ? String(selectedProfile.idProfile) : selectedProfile?.id || ''
 
@@ -53,10 +54,10 @@ export function VOD() {
     }
   }, [libraries, profileId])
 
-  // Scroll category bar to keep selected visible
+  // Scroll category bar
   useEffect(() => {
     const x = selectedCategoryIndex * (CHIP_W + CHIP_GAP)
-    const maxVisible = 1600
+    const maxVisible = 1500
     if (x + CHIP_W > -catScrollOffset + maxVisible) {
       setCatScrollOffset(-(x - maxVisible + CHIP_W + CHIP_GAP))
     } else if (x < -catScrollOffset) {
@@ -64,24 +65,46 @@ export function VOD() {
     }
   }, [selectedCategoryIndex])
 
-  // Scroll grid to keep focused row visible
+  // Reset when rows change
   useEffect(() => {
-    const row = Math.floor(gridIndex / GRID_COLS)
-    const rowH = 300
-    const maxVisibleRows = 2
-    const y = row * rowH
-    if (y > -gridScrollY + rowH * maxVisibleRows) {
-      setGridScrollY(-(y - rowH * (maxVisibleRows - 1)))
-    } else if (y < -gridScrollY) {
-      setGridScrollY(-y)
-    }
-  }, [gridIndex])
+    setRowIndex(0)
+    setColIndex(0)
+    setContentScrollY(0)
+    setRowScrollOffsets(rows.map(() => 0))
+  }, [rows])
 
-  // Reset grid index when contents change
+  // Scroll content area vertically to keep focused row visible
   useEffect(() => {
-    setGridIndex(0)
-    setGridScrollY(0)
-  }, [contents])
+    const ROW_H = 360
+    const TITLED_ROW_H = 400
+    const maxVisible = 600
+    let y = 0
+    for (let i = 0; i < rowIndex; i++) {
+      y += rows[i]?.title ? TITLED_ROW_H : ROW_H
+    }
+    if (y > -contentScrollY + maxVisible) {
+      setContentScrollY(-(y - maxVisible + ROW_H))
+    } else if (y < -contentScrollY) {
+      setContentScrollY(-y)
+    }
+  }, [rowIndex])
+
+  // Scroll current row horizontally
+  useEffect(() => {
+    if (rows.length === 0) return
+    const CARD_W = 340
+    const CARD_GAP = 24
+    const maxVisible = 1400
+    const x = colIndex * (CARD_W + CARD_GAP)
+    const offsets = [...rowScrollOffsets]
+    const current = offsets[rowIndex] || 0
+    if (x + CARD_W > -current + maxVisible) {
+      offsets[rowIndex] = -(x - maxVisible + CARD_W + CARD_GAP)
+    } else if (x < -current) {
+      offsets[rowIndex] = -x
+    }
+    setRowScrollOffsets(offsets)
+  }, [colIndex, rowIndex])
 
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (!isSpatialEnabled()) return
@@ -89,16 +112,15 @@ export function VOD() {
     if (focusArea === 'categories') {
       switch (e.key) {
         case 'ArrowLeft':
-          e.preventDefault()
-          e.stopImmediatePropagation()
           if (selectedCategoryIndex > 0) {
+            e.preventDefault()
+            e.stopImmediatePropagation()
             const newIdx = selectedCategoryIndex - 1
             setSelectedCategoryIndex(newIdx)
             if (categories[newIdx] && profileId && libraryId) {
-              fetchCategoryContents(profileId, libraryId, categories[newIdx].id)
+              fetchCategoryData(profileId, libraryId, categories[newIdx])
             }
           }
-          // if at 0, let spatial nav edge open sidebar
           break
 
         case 'ArrowRight':
@@ -108,7 +130,7 @@ export function VOD() {
             const newIdx = selectedCategoryIndex + 1
             setSelectedCategoryIndex(newIdx)
             if (categories[newIdx] && profileId && libraryId) {
-              fetchCategoryContents(profileId, libraryId, categories[newIdx].id)
+              fetchCategoryData(profileId, libraryId, categories[newIdx])
             }
           }
           break
@@ -116,9 +138,10 @@ export function VOD() {
         case 'ArrowDown':
           e.preventDefault()
           e.stopImmediatePropagation()
-          if (contents.length > 0) {
-            setFocusArea('grid')
-            setGridIndex(0)
+          if (rows.length > 0) {
+            setFocusArea('rows')
+            setRowIndex(0)
+            setColIndex(0)
           }
           break
 
@@ -129,29 +152,36 @@ export function VOD() {
           route('/')
           break
       }
-    } else if (focusArea === 'grid') {
+    } else if (focusArea === 'rows') {
+      const currentRow = rows[rowIndex]
+      if (!currentRow) return
+
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault()
           e.stopImmediatePropagation()
-          if (gridIndex % GRID_COLS > 0) {
-            setGridIndex((i) => i - 1)
+          if (colIndex > 0) {
+            setColIndex((c) => c - 1)
           }
           break
 
         case 'ArrowRight':
           e.preventDefault()
           e.stopImmediatePropagation()
-          if (gridIndex % GRID_COLS < GRID_COLS - 1 && gridIndex < contents.length - 1) {
-            setGridIndex((i) => i + 1)
+          if (colIndex < currentRow.contents.length - 1) {
+            setColIndex((c) => c + 1)
           }
           break
 
         case 'ArrowUp':
           e.preventDefault()
           e.stopImmediatePropagation()
-          if (gridIndex >= GRID_COLS) {
-            setGridIndex((i) => i - GRID_COLS)
+          if (rowIndex > 0) {
+            const newRow = rowIndex - 1
+            setRowIndex(newRow)
+            // Clamp col to new row length
+            const maxCol = rows[newRow].contents.length - 1
+            if (colIndex > maxCol) setColIndex(maxCol)
           } else {
             setFocusArea('categories')
           }
@@ -160,8 +190,11 @@ export function VOD() {
         case 'ArrowDown':
           e.preventDefault()
           e.stopImmediatePropagation()
-          if (gridIndex + GRID_COLS < contents.length) {
-            setGridIndex((i) => i + GRID_COLS)
+          if (rowIndex < rows.length - 1) {
+            const newRow = rowIndex + 1
+            setRowIndex(newRow)
+            const maxCol = rows[newRow].contents.length - 1
+            if (colIndex > maxCol) setColIndex(maxCol)
           }
           break
 
@@ -173,7 +206,7 @@ export function VOD() {
           break
       }
     }
-  }, [focusArea, selectedCategoryIndex, gridIndex, categories, contents, profileId, libraryId, fetchCategoryContents, setSelectedCategoryIndex])
+  }, [focusArea, selectedCategoryIndex, rowIndex, colIndex, categories, rows, profileId, libraryId, fetchCategoryData, setSelectedCategoryIndex])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKey, true)
@@ -191,6 +224,7 @@ export function VOD() {
 
       {!isLoading && !error && categories.length > 0 && (
         <>
+          <div class="vod-section-label">Categories</div>
           <VodCategoryBar
             categories={categories}
             selectedIndex={selectedCategoryIndex}
@@ -198,26 +232,38 @@ export function VOD() {
             scrollOffset={catScrollOffset}
           />
 
-          <div class="vod-grid-container">
+          <div class="vod-rows-container">
             {isLoadingContents && <Loader message="Loading..." />}
 
-            {!isLoadingContents && contents.length === 0 && (
+            {!isLoadingContents && rows.length === 0 && (
               <p class="text-muted" style={{ fontSize: '22px', padding: '40px 0' }}>
                 No content in this category
               </p>
             )}
 
-            {!isLoadingContents && contents.length > 0 && (
+            {!isLoadingContents && rows.length > 0 && (
               <div
-                class="vod-grid"
-                style={{ transform: `translateY(${gridScrollY}px)` }}
+                class="vod-rows"
+                style={{ transform: `translateY(${contentScrollY}px)` }}
               >
-                {contents.map((item, i) => (
-                  <VodCard
-                    key={item.id}
-                    content={item}
-                    focused={focusArea === 'grid' && gridIndex === i}
-                  />
+                {rows.map((row, ri) => (
+                  <div key={row.categoryId} class="vod-row">
+                    {row.title && <div class="vod-row-title">{row.title}</div>}
+                    <div class="vod-row-scroll-container">
+                      <div
+                        class="vod-row-scroll"
+                        style={{ transform: `translateX(${rowScrollOffsets[ri] || 0}px)` }}
+                      >
+                        {row.contents.map((item, ci) => (
+                          <VodCard
+                            key={item.id}
+                            content={item}
+                            focused={focusArea === 'rows' && rowIndex === ri && colIndex === ci}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
