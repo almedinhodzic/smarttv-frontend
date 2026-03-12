@@ -25,23 +25,23 @@ export class VodService extends BaseService {
   }
 
   public async getVodLibrary(profileId: string, body: GraphQLBody): Promise<VodLibrary> {
-    return this.httpClient.post<VodLibrary>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
+    return this.httpClient.postJson<VodLibrary>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
   }
 
   public async getCategory(profileId: string, body: GraphQLBody): Promise<any> {
-    return this.httpClient.post<any>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
+    return this.httpClient.postJson<any>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
   }
 
   public async getVodForCategories(profileId: string, body: GraphQLBody): Promise<any> {
-    return this.httpClient.post<any>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
+    return this.httpClient.postJson<any>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
   }
 
   public async getVodContent(profileId: string, body: GraphQLBody): Promise<VodContent> {
-    return this.httpClient.post<VodContent>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
+    return this.httpClient.postJson<VodContent>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
   }
 
   public async getVodContents(profileId: string, body: GraphQLBody): Promise<VodContent[]> {
-    return this.httpClient.post<VodContent[]>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
+    return this.httpClient.postJson<VodContent[]>(`${API_ENDPOINTS.VOD}/${profileId}/graphql`, body)
   }
 
   public async getAllBookmarks(regionId: string, userId: string): Promise<BookmarkListResponse> {

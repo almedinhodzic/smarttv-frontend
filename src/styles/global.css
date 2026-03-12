@@ -1311,6 +1311,157 @@ html, body {
   opacity: 1;
 }
 
+/* ============ VOD ============ */
+
+.page-vod {
+  padding-top: 60px;
+  overflow: hidden;
+}
+
+.page-vod .page-title {
+  margin-bottom: 24px;
+}
+
+/* Category bar */
+.vod-category-bar {
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.vod-category-scroll {
+  display: flex;
+  gap: 12px;
+  transition: transform 200ms ease-out;
+  will-change: transform;
+}
+
+.vod-category-chip {
+  flex-shrink: 0;
+  min-width: 180px;
+  max-width: 280px;
+  padding: 14px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  cursor: none;
+  transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+  border: 2px solid transparent;
+}
+
+.vod-category-chip.selected {
+  background: var(--color-surface-elevated);
+  border-color: var(--color-primary-muted);
+}
+
+.vod-category-chip.focused {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.vod-category-chip-label {
+  font-size: 20px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.vod-category-chip.selected .vod-category-chip-label {
+  color: var(--color-text);
+}
+
+.vod-category-chip.focused .vod-category-chip-label {
+  color: #fff;
+}
+
+/* Content grid */
+.vod-grid-container {
+  flex: 1;
+  overflow: hidden;
+  height: 720px;
+}
+
+.vod-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  transition: transform 200ms ease-out;
+  will-change: transform;
+}
+
+.vod-card {
+  width: 310px;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  cursor: none;
+  transition: transform var(--transition-fast), outline-color var(--transition-fast);
+  outline: 3px solid transparent;
+  outline-offset: 2px;
+}
+
+.vod-card.focused {
+  transform: scale(1.05);
+  outline-color: var(--color-primary);
+}
+
+.vod-card-poster {
+  width: 100%;
+  height: 175px;
+  background: var(--color-surface-elevated);
+  position: relative;
+  overflow: hidden;
+}
+
+.vod-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vod-card-badge-new {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.vod-card-info {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vod-card-title {
+  font-size: 18px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vod-card.focused .vod-card-title {
+  color: #fff;
+}
+
+.vod-card-meta {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ============ Search ============ */
 
 .search-input {
