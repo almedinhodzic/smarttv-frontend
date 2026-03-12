@@ -9,7 +9,6 @@ import { FpsMonitor } from '@/components/FpsMonitor'
 import { Home } from '@/pages/Home'
 import { LiveTV } from '@/pages/LiveTV'
 import { VOD } from '@/pages/VOD'
-import { Series } from '@/pages/Series'
 import { EPG } from '@/pages/EPG'
 import { Search } from '@/pages/Search'
 import { Auth } from '@/pages/Auth'
@@ -132,7 +131,6 @@ export function App() {
         <Home path="/" />
         <LiveTV path="/live" />
         <VOD path="/vod" />
-        <Series path="/series" />
         <EPG path="/epg" />
         <Search path="/search" />
       </Router>

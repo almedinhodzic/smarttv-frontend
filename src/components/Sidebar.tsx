@@ -6,7 +6,6 @@ import { spatialDisable, spatialEnable } from '@/spatial'
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', icon: '/assets/home_icon.png', path: '/' },
   { key: 'livetv', label: 'TV & Radio', icon: '/assets/live_tv_icon.png', path: '/live' },
-  { key: 'series', label: 'Series', icon: '/assets/tv_shows_icon.png', path: '/series' },
   { key: 'vod', label: 'VOD', icon: '/assets/vod_icon.png', path: '/vod' },
   { key: 'epg', label: 'TV Guide', icon: '/assets/epg_logo.png', path: '/epg' },
   { key: 'mycontent', label: 'My Content', icon: '/assets/heart_icon.png', path: '/my-content' },
