@@ -1,4 +1,5 @@
 import type { Category } from '@/services/sdk/src/models/vod'
+import { formatCategoryLabel } from '@/utils/formatCategoryLabel'
 
 interface VodCategoryBarProps {
   categories: Category[]
@@ -23,7 +24,7 @@ export function VodCategoryBar({ categories, selectedIndex, focused, scrollOffse
               key={cat.id}
               class={`vod-category-chip ${isSelected ? 'selected' : ''} ${isFocused ? 'focused' : ''}`}
             >
-              <span class="vod-category-chip-label">{cat.title}</span>
+              <span class="vod-category-chip-label">{formatCategoryLabel(cat.title)}</span>
             </div>
           )
         })}

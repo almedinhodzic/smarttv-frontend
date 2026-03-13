@@ -27,7 +27,7 @@ export function App() {
   const refreshIfNeeded = useSessionStore((s) => s.refreshIfNeeded)
 
   const showSidebar = !shouldHideSidebar(currentPath)
-  const showNavbar = currentPath === '/'
+  const showNavbar = showSidebar
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [navbarFocused, setNavbarFocused] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
