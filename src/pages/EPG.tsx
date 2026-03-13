@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks'
 import { focusFirst, setOnBack } from '@/spatial'
 import { route } from 'preact-router'
 
-export function EPG() {
+export function EPG(_props: { path?: string }) {
   useEffect(() => {
     focusFirst()
     setOnBack(() => route('/'))

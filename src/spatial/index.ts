@@ -177,3 +177,8 @@ export function setOnEdge(cb: ((direction: Direction) => void) | null): void {
 export function spatialEnable(): void { enabled = true }
 export function spatialDisable(): void { enabled = false }
 export function isSpatialEnabled(): boolean { return enabled }
+
+/** Manually trigger edge callback (e.g. from pages with custom key handling) */
+export function triggerEdge(direction: 'up' | 'down' | 'left' | 'right'): void {
+  if (onEdgeCallback) onEdgeCallback(direction)
+}

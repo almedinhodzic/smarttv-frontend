@@ -18,7 +18,7 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
 
-export function VOD() {
+export function VOD(_props: { path?: string }) {
   const user = useSessionStore((s) => s.user);
   const selectedProfile = useSessionStore((s) => s.selectedProfile);
 
@@ -206,6 +206,14 @@ export function VOD() {
               setRowIndex(newRow);
               const maxCol = rows[newRow].contents.length - 1;
               if (colIndex > maxCol) setColIndex(maxCol);
+            }
+            break;
+
+          case "Enter":
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (currentRow.contents[colIndex]) {
+              route(`/vod/${currentRow.contents[colIndex].id}`);
             }
             break;
 

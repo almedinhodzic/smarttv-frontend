@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { sdk } from '@/services/sdkInstance'
+import { getDeviceUid } from '@/platform'
+import { useToastStore } from './toastStore'
 import type {
   Category,
   VodContent,
@@ -75,6 +77,11 @@ const CONTENT_FIELDS = `
   description
   year
   genres
+  contentActions {
+    favorite
+    unfavorite
+    resumePlay { mediaId offset }
+  }
   purchaseInfo {
     status
     libraryId
@@ -89,6 +96,13 @@ const CONTENT_FIELDS = `
     contentCount
   }
 `
+
+const CONTENT_QUERY = (contentId: string, libraryId: string, categoryId = '') => `{
+  contents(contentIds: ["${contentId}"], libraryId: "${libraryId}", categoryId: "${categoryId}") {
+    ${CONTENT_FIELDS}
+    summary
+  }
+}`
 
 const CATEGORY_CONTENTS_QUERY = (libraryId: string, categoryId: string, count = 50) => `{
   category(categoryId: "${categoryId}", libraryId: "${libraryId}") {
@@ -112,16 +126,20 @@ interface VodState {
   categories: Category[]
   selectedCategoryIndex: number
   rows: ContentRow[]
+  detailContent: VodContent | null
   isLoadingLibraries: boolean
   isLoadingCategories: boolean
   isLoadingContents: boolean
+  isLoadingDetail: boolean
   error: string
   libraryId: string
 
   fetchLibraries: (regionId: string, language: string) => Promise<void>
   fetchCategories: (profileId: string, libraryId: string) => Promise<void>
   fetchCategoryData: (profileId: string, libraryId: string, category: Category) => Promise<void>
+  fetchContentById: (profileId: string, contentId: string, regionId?: string, language?: string) => Promise<void>
   setSelectedCategoryIndex: (index: number) => void
+  toggleFavorite: (contentId: string) => Promise<void>
 }
 
 export const useVodStore = create<VodState>((set, get) => ({
@@ -129,9 +147,11 @@ export const useVodStore = create<VodState>((set, get) => ({
   categories: [],
   selectedCategoryIndex: 0,
   rows: [],
+  detailContent: null,
   isLoadingLibraries: false,
   isLoadingCategories: false,
   isLoadingContents: false,
+  isLoadingDetail: false,
   error: '',
   libraryId: '',
 
@@ -220,5 +240,108 @@ export const useVodStore = create<VodState>((set, get) => ({
     }
   },
 
+  fetchContentById: async (profileId, contentId, regionId?, language?) => {
+    // First check if already in rows cache
+    const { rows } = get()
+    for (const row of rows) {
+      const found = row.contents.find((c) => c.id === contentId)
+      if (found) {
+        set({ detailContent: found, isLoadingDetail: false })
+        return
+      }
+    }
+
+    set({ isLoadingDetail: true, detailContent: null })
+
+    // Resolve libraryId — fetch libraries if needed
+    let libId = get().libraryId
+    if (!libId && regionId) {
+      try {
+        const res = await sdk.vod.getVodLibraries(regionId, { language: language || 'en', type: 'on-demand' })
+        const list = Array.isArray(res) ? res : (res as any)?.list || []
+        if (list.length > 0) {
+          libId = list[0].id
+          set({ libraries: list, libraryId: libId })
+        }
+      } catch (e) {
+        console.error('[VOD] fetchLibraries for detail error:', e)
+      }
+    }
+
+    if (!libId) {
+      set({ detailContent: null, isLoadingDetail: false })
+      return
+    }
+
+    try {
+      const res = await sdk.vod.getVodContent(profileId, {
+        query: CONTENT_QUERY(contentId, libId),
+      })
+      const contents = (res as any)?.data?.contents ?? []
+      const data = Array.isArray(contents) ? contents[0] : null
+      set({ detailContent: data || null, isLoadingDetail: false })
+    } catch (e) {
+      console.error('[VOD] fetchContentById error:', e)
+      set({ detailContent: null, isLoadingDetail: false })
+    }
+  },
+
   setSelectedCategoryIndex: (index) => set({ selectedCategoryIndex: index }),
+
+  toggleFavorite: async (contentId: string) => {
+    const { rows } = get()
+    // Find the content to get its contentActions and isFavorite state
+    let target: VodContent | null = null
+    for (const row of rows) {
+      const found = row.contents.find((c) => c.id === contentId)
+      if (found) { target = found; break }
+    }
+    if (!target) return
+
+    const isFavorite = target.isFavorite
+    const urls = isFavorite
+      ? target.contentActions?.unfavorite
+      : target.contentActions?.favorite
+
+    if (!urls || urls.length === 0) return
+
+    // Optimistic update: flip isFavorite and swap contentActions URLs
+    const updated = rows.map((row) => ({
+      ...row,
+      contents: row.contents.map((c) =>
+        c.id === contentId
+          ? {
+              ...c,
+              isFavorite: !isFavorite,
+              contentActions: {
+                ...c.contentActions,
+                favorite: c.contentActions?.unfavorite || [],
+                unfavorite: c.contentActions?.favorite || [],
+              },
+            }
+          : c,
+      ),
+    }))
+    set({ rows: updated })
+
+    const deviceUid = getDeviceUid()
+    const title = target.title || 'Content'
+    try {
+      for (const url of urls) {
+        if (isFavorite) {
+          await sdk.vod.unMarkAsFavorite(url, { device_uid: deviceUid })
+        } else {
+          await sdk.vod.markAsFavorite(url, { device_uid: deviceUid })
+        }
+      }
+      useToastStore.getState().show(
+        isFavorite ? `${title} removed from Favorites` : `${title} added to Favorites`
+      )
+    } catch (e) {
+      // Revert on failure
+      console.error('[VOD] toggleFavorite error:', e)
+      set({ rows })
+      useToastStore.getState().show('Failed to update favorites')
+    }
+  },
 }))

@@ -22,7 +22,7 @@ interface UserProfile {
 
 const COLS = 5
 
-export function Profiles() {
+export function Profiles(_props: { path?: string }) {
   const [profiles, setProfiles] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -57,7 +57,7 @@ export function Profiles() {
         }
 
         const res = await sdk.user.getUserProfiles(regionId, subscriberId)
-        const list = Array.isArray(res) ? res : ((res as Record<string, unknown>)?.list as UserProfile[] ?? [])
+        const list = Array.isArray(res) ? res : (((res as unknown) as Record<string, unknown>)?.list as UserProfile[] ?? [])
         const active = (list as UserProfile[]).filter((p) => p.status === 'ACTIVE' || !p.status)
         setProfiles(active)
 

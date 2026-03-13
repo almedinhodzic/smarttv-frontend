@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks'
 import { focusFirst } from '@/spatial'
 import { useSessionStore } from '@/stores/sessionStore'
 
-export function Home() {
+export function Home(_props: { path?: string }) {
   const profile = useSessionStore((s) => s.selectedProfile)
 
   useEffect(() => { focusFirst() }, [])

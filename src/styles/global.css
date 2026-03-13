@@ -1488,6 +1488,123 @@ body {
   line-height: 1.5;
 }
 
+/* ============ VOD Detail Page ============ */
+
+.page-vod-detail {
+  padding-top: 140px;
+  overflow: hidden;
+}
+
+.page-vod-detail .page-title {
+  margin-bottom: 4px;
+}
+
+.page-vod-detail .vod-detail-meta {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.vod-detail-body {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 32px;
+}
+
+.vod-detail-poster {
+  width: 300px;
+  height: 420px;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.vod-detail-poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vod-detail-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+  height: 420px;
+  overflow: hidden;
+}
+
+.vod-detail-description-full {
+  font-size: 20px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vod-detail-credits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.vod-detail-credit-row {
+  display: flex;
+  gap: 12px;
+  font-size: 18px;
+}
+
+.vod-detail-credit-label {
+  color: var(--color-text-muted);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.vod-detail-credit-value {
+  color: var(--color-text-secondary);
+}
+
+.vod-detail-actions {
+  display: flex;
+  gap: 20px;
+}
+
+.vod-detail-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 28px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  font-size: 20px;
+  color: var(--color-text-secondary);
+  cursor: none;
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.vod-detail-action-btn.focused {
+  background: var(--color-primary);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.vod-detail-action-icon {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+}
+
+.vod-detail-action-btn.focused .vod-detail-action-icon {
+  opacity: 1;
+}
+
 /* Content rows */
 .vod-rows-container {
   flex: 1;
@@ -1604,6 +1721,31 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ============ Toast ============ */
+
+.toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 16px 36px;
+  background: rgba(30, 30, 30, 0.92);
+  color: #fff;
+  font-size: 22px;
+  font-family: var(--font-body);
+  border-radius: var(--radius-lg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease, transform 300ms ease;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ============ Search ============ */

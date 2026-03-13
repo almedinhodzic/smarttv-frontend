@@ -2,7 +2,7 @@ import { useState, useEffect } from 'preact/hooks'
 import { focusFirst, setOnBack } from '@/spatial'
 import { route } from 'preact-router'
 
-export function Search() {
+export function Search(_props: { path?: string }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
 

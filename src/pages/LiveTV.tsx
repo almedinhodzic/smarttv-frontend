@@ -14,7 +14,7 @@ const GAP = 8
 const LIST_H = 940
 const CENTER_Y = Math.round(LIST_H / 2 - CARD_H_BIG / 2)
 
-export function LiveTV() {
+export function LiveTV(_props: { path?: string }) {
   const channels = useChannelStore((s) => s.channels)
   const isLoading = useChannelStore((s) => s.isLoading)
   const error = useChannelStore((s) => s.error)

@@ -8,7 +8,7 @@ import { spatialDisable, spatialEnable } from '@/spatial'
 
 const PIN_LENGTH = 10
 
-export function Auth() {
+export function Auth(_props: { path?: string }) {
   const [pin, setPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

@@ -6,9 +6,11 @@ import { Sidebar } from '@/components/Sidebar'
 import { Navbar } from '@/components/Navbar'
 import { SettingsPanel } from '@/components/SettingsPanel'
 import { FpsMonitor } from '@/components/FpsMonitor'
+import { Toast } from '@/components/Toast'
 import { Home } from '@/pages/Home'
 import { LiveTV } from '@/pages/LiveTV'
 import { VOD } from '@/pages/VOD'
+import { VodDetail } from '@/pages/VodDetail'
 import { EPG } from '@/pages/EPG'
 import { Search } from '@/pages/Search'
 import { Auth } from '@/pages/Auth'
@@ -109,6 +111,7 @@ export function App() {
   return (
     <div id="app-root">
       <FpsMonitor />
+      <Toast />
       <Navbar
         visible={showNavbar}
         hasFocus={navbarFocused}
@@ -131,6 +134,7 @@ export function App() {
         <Home path="/" />
         <LiveTV path="/live" />
         <VOD path="/vod" />
+        <VodDetail path="/vod/:id" />
         <EPG path="/epg" />
         <Search path="/search" />
       </Router>
