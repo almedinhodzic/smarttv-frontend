@@ -87,20 +87,15 @@ export function VOD() {
     setRowScrollOffsets(rows.map(() => 0));
   }, [rows]);
 
-  // Scroll content area vertically to keep focused row visible
+  // Snap focused row to top of the rows container
   useEffect(() => {
     const ROW_H = 360;
     const TITLED_ROW_H = 400;
-    const maxVisible = 600;
     let y = 0;
     for (let i = 0; i < rowIndex; i++) {
       y += rows[i]?.title ? TITLED_ROW_H : ROW_H;
     }
-    if (y > -contentScrollY + maxVisible) {
-      setContentScrollY(-(y - maxVisible + ROW_H));
-    } else if (y < -contentScrollY) {
-      setContentScrollY(-y);
-    }
+    setContentScrollY(-y);
   }, [rowIndex]);
 
   // Scroll current row horizontally
